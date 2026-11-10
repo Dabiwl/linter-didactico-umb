@@ -8,24 +8,140 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Prototipo de Linter Didactico - UMB")
-st.markdown("Herramienta de evaluacion de calidad de software y soporte pedagogico para proyectos en Python.")
-st.divider()
+# Codigo de prueba representativo de un proyecto universitario
+CODIGO_EJEMPLO = '''# Sistema de Gestion Academica y Evaluacion de Estudiantes
+# Proyecto de Laboratorio de Programacion en Python
 
+def procesarRegistroEstudiante(codigoId, nombreCompleto, carreraDestino):
+    # Mala practica: Variables con nomenclatura camelCase
+    primerSemestre = True
+    estadoActivo = "Matriculado"
+    
+    # Mala practica: Variable asignada que nunca se consume en la logica
+    fechaRegistroSistema = "2026-11-09"
+    codigoSedeFacultad = 104
+    
+    return {
+        "id": codigoId,
+        "estudiante": nombreCompleto,
+        "programa": carreraDestino,
+        "activo": primerSemestre
+    }
+
+def generarReporteAcademicoConsolidado(listadoNotas, porcentajeAsistencia):
+    # Mala practica: Violacion del principio de modularidad (> 15 lineas continuas)
+    notaPrimerCorte = 3.5
+    notaSegundoCorte = 4.0
+    notaExamenFinal = 2.8
+    
+    ponderacionUno = 0.30
+    ponderacionDos = 0.30
+    ponderacionTres = 0.40
+    
+    calificacionPonderadaUno = notaPrimerCorte * ponderacionUno
+    calificacionPonderadaDos = notaSegundoCorte * ponderacionDos
+    calificacionPonderadaTres = notaExamenFinal * ponderacionTres
+    
+    notaDefinitivaTotal = calificacionPonderadaUno + calificacionPonderadaDos + calificacionPonderadaTres
+    
+    # Mala practica adicional: Variable sin utilizar
+    promedioHistoricoCohorte = 3.8
+    
+    estadoAprobacion = False
+    if notaDefinitivaTotal >= 3.0 and porcentajeAsistencia >= 80:
+        estadoAprobacion = True
+    else:
+        estadoAprobacion = False
+        
+    mensajeFinal = f"Resultado final: {notaDefinitivaTotal} - Aprobado: {estadoAprobacion}"
+    return mensajeFinal
+
+def auditoriaRendimientoSedes(sedesUniversitarias):
+    # Mala practica: Anidamiento excesivo que satura la carga cognitiva (> 2 niveles)
+    for sede in sedesUniversitarias:
+        if len(sede) > 0:
+            for grupoCurso in sede:
+                if grupoCurso.get("activo"):
+                    print(f"Grupo evaluado: {grupoCurso.get('nombre')}")
+
+def calcular_promedio_limpio(valores):
+    # Funcion disenada con buenas practicas como punto de comparacion
+    if not valores:
+        return 0.0
+    return sum(valores) / len(valores)
+'''
+
+# Control de estado de sesion para el aviso flotante y el editor
+if "aviso_mostrado" not in st.session_state:
+    st.session_state.aviso_mostrado = False
+
+if "texto_editor" not in st.session_state:
+    st.session_state.texto_editor = ""
+
+# Cuadro de dialogo flotante al inicio
+@st.dialog("Prototipo de Linter Didactico - UMB")
+def mostrar_aviso_bienvenida():
+    st.markdown(
+        "Esta herramienta de analisis estatico asiste a estudiantes de programacion "
+        "en la identificacion y correccion de malas practicas en proyectos de Python, "
+        "con base en el Abstract Syntax Tree (AST) y normas de calidad de software (ISO 25010)."
+    )
+    st.markdown("**Instrucciones:**")
+    st.markdown(
+        "1. Puede cargar un archivo Python (.py) de su preferencia en el panel lateral izquierdo "
+        "o escribir directamente en el editor central.\n"
+        "2. Si no dispone de un archivo propio, en el panel lateral izquierdo puede "
+        "importar o descargar un proyecto de ejemplo completo con malas practicas documentadas.\n"
+        "3. Haga clic en 'Ejecutar Analisis' para obtener la evaluacion cuantitativa y la retroalimentacion formativa."
+    )
+    if st.button("Entendido / Comenzar evaluacion", type="primary", use_container_width=True):
+        st.session_state.aviso_mostrado = True
+        st.rerun()
+
+if not st.session_state.aviso_mostrado:
+    mostrar_aviso_bienvenida()
+
+# --- BARRA LATERAL IZQUIERDA ---
 with st.sidebar:
+    st.header("Codigo de Ejemplo")
+    st.caption("Utilice este proyecto de prueba si no dispone de un archivo propio para analizar:")
+    
+    # Opcion 1: Importar directamente al editor de texto
+    if st.button("Importar codigo al editor", use_container_width=True):
+        st.session_state.texto_editor = CODIGO_EJEMPLO
+    
+    # Opcion 2: Descargar el archivo .py
+    st.download_button(
+        label="Descargar archivo (.py)",
+        data=CODIGO_EJEMPLO,
+        file_name="proyecto_prueba_academico.py",
+        mime="text/x-python",
+        use_container_width=True
+    )
+    
+    st.divider()
+    
     st.header("Carga de Archivo")
     archivo_subido = st.file_uploader("Seleccione un archivo (.py)", type=["py"])
     st.caption("Suba el archivo fuente para iniciar la evaluacion estatica.")
+
+
+# --- AREA PRINCIPAL ---
+st.title("Prototipo de Linter Didactico - UMB")
+st.markdown("Herramienta de evaluacion de calidad de software y soporte pedagogico para proyectos en Python.")
+st.divider()
 
 codigo_a_analizar = ""
 
 if archivo_subido is not None:
     codigo_a_analizar = archivo_subido.getvalue().decode("utf-8")
+    st.caption(f"Archivo cargado actualmente: {archivo_subido.name}")
 else:
     codigo_a_analizar = st.text_area(
-        "O ingrese el codigo fuente directamente en este panel:",
-        height=220,
-        placeholder="def calcular_area():\n    pass"
+        "Editor de codigo fuente:",
+        value=st.session_state.texto_editor,
+        height=260,
+        placeholder="Ingrese su codigo Python aqui o presione 'Importar codigo al editor' en la barra lateral..."
     )
 
 if st.button("Ejecutar Analisis", type="primary"):
@@ -63,7 +179,6 @@ if st.button("Ejecutar Analisis", type="primary"):
             
         csv_data = buffer_csv.getvalue().encode("utf-8")
         
-        # Boton de descarga para investigacion
         st.download_button(
             label="Descargar Reporte de Metricas (CSV)",
             data=csv_data,
